@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inspection App</title>
+</head>
+<body style="margin:0;background:#111;color:#fff;font-family:sans-serif;text-align:center">
+  <h2>Camera Test</h2>
+  <button id="start" style="font-size:20px;padding:12px 24px">Start Camera</button>
+  <p id="msg"></p>
+  <video id="cam" autoplay playsinline muted style="width:100%"></video>
+  <script>
+    document.getElementById('start').onclick = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: true
+        });
+        document.getElementById('cam').srcObject = stream;
+        document.getElementById('msg').textContent = 'Camera and mic working!';
+      } catch (e) {
+        document.getElementById('msg').textContent = 'Error: ' + e.message;
+      }
+    };
+  </script>
+</body>
+</html>
