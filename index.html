@@ -4,24 +4,69 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Inspection App</title>
+  <style>
+    body { margin:0; background:#111; color:#fff; font-family:sans-serif; text-align:center; }
+    button { font-size:20px; padding:12px 24px; margin:8px; }
+    video { width:100%; background:#000; }
+  </style>
 </head>
-<body style="margin:0;background:#111;color:#fff;font-family:sans-serif;text-align:center">
-  <h2>Camera Test</h2>
-  <button id="start" style="font-size:20px;padding:12px 24px">Start Camera</button>
+<body>
+  <h2>Recording Test</h2>
+
+  <button id="start">1. Start Camera</button>
+  <button id="rec" disabled>2. Record</button>
+  <button id="stop" disabled>3. Stop</button>
   <p id="msg"></p>
-  <video id="cam" autoplay playsinline muted style="width:100%"></video>
+
+  <video id="cam" autoplay playsinline muted></video>
+
+  <h3>Playback</h3>
+  <video id="playback" controls playsinline></video>
+  <p><a id="download" style="color:#6cf;font-size:20px" download="clip.webm"></a></p>
+
   <script>
+    let stream, recorder, chunks = [];
+    const msg = document.getElementById('msg');
+    const cam = document.getElementById('cam');
+    const playback = document.getElementById('playback');
+    const download = document.getElementById('download');
+
     document.getElementById('start').onclick = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' },
           audio: true
         });
-        document.getElementById('cam').srcObject = stream;
-        document.getElementById('msg').textContent = 'Camera and mic working!';
+        cam.srcObject = stream;
+        document.getElementById('rec').disabled = false;
+        msg.textContent = 'Camera ready. Tap Record.';
       } catch (e) {
-        document.getElementById('msg').textContent = 'Error: ' + e.message;
+        msg.textContent = 'Error: ' + e.message;
       }
+    };
+
+    document.getElementById('rec').onclick = () => {
+      chunks = [];
+      recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: recorder.mimeType });
+        const url = URL.createObjectURL(blob);
+        playback.src = url;
+        download.href = url;
+        download.textContent = 'Download clip (' + Math.round(blob.size / 1024) + ' KB)';
+        msg.textContent = 'Recording finished. Play it below.';
+      };
+      recorder.start();
+      document.getElementById('rec').disabled = true;
+      document.getElementById('stop').disabled = false;
+      msg.textContent = 'Recording... say something!';
+    };
+
+    document.getElementById('stop').onclick = () => {
+      recorder.stop();
+      document.getElementById('rec').disabled = false;
+      document.getElementById('stop').disabled = true;
     };
   </script>
 </body>
